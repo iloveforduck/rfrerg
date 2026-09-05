@@ -1,50 +1,110 @@
-name: Kali Linux Cloud Shell
-
-on:
-  workflow_dispatch:
-
-jobs:
-  kali:
-    runs-on: ubuntu-latest
-    timeout-minutes: 360
-
-    steps:
-      - name: Pull Kali Docker Image
-        run: |
-          docker pull kalilinux/kali-rolling
-          
-      - name: Start Kali Container with SSH
-        env:
-          TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
-        run: |
-          # Run Kali container with SSH enabled
-          docker run -d --name kali-box \
-            -p 2222:22 \
-            --privileged \
-            kalilinux/kali-rolling \
-            /bin/bash -c "apt update && apt install -y openssh-server sudo && mkdir -p /var/run/sshd && echo 'root:Kali2026!' | chpasswd && echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && /usr/sbin/sshd -D"
-          
-          sleep 10
-          
-          # Install Tailscale on host
-          curl -fsSL https://tailscale.com/install.sh | sh
-          tailscale up --authkey="$TAILSCALE_AUTHKEY" --hostname="kali-cloud"
-          
-          TS_IP=$(tailscale ip -4)
-          
-          echo ""
-          echo "=================================================="
-          echo "  >>> KALI IS READY! <<<"
-          echo "  Tailscale IP : $TS_IP"
-          echo "  SSH Port     : 2222"
-          echo "  Username     : root"
-          echo "  Password     : Kali2026!"
-          echo "  >> Connect: ssh -p 2222 root@$TS_IP"
-          echo "=================================================="
-
-      - name: Keep Alive
-        run: |
-          for i in {1..2880}; do
-            sleep 60
-            echo "[$i/2880] Kali running..."
-          done
+Run docker pull kalilinux/kali-rolling
+  docker pull kalilinux/kali-rolling
+  shell: /usr/bin/bash -e {0}
+Using default tag: latest
+latest: Pulling from kalilinux/kali-rolling
+4d8ddc1e35b0: Pulling fs layer
+4d8ddc1e35b0: Download complete
+21s
++ sudo mkdir -p --mode=0755 /usr/share/keyrings
+Installing Tailscale for ubuntu noble, using method apt
++ curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg
++ sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg
++ sudo chmod 0644 /usr/share/keyrings/tailscale-archive-keyring.gpg
++ curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.tailscale-keyring.list
++ sudo tee /etc/apt/sources.list.d/tailscale.list
+# Tailscale packages for ubuntu noble
+deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/ubuntu noble main
++ sudo chmod 0644 /etc/apt/sources.list.d/tailscale.list
++ sudo apt-get update
+Get:1 file:/etc/apt/apt-mirrors.txt Mirrorlist [144 B]
+Get:6 https://packages.microsoft.com/ubuntu/24.04/prod noble InRelease [3600 B]
+Hit:2 http://azure.archive.ubuntu.com/ubuntu noble InRelease
+Get:3 http://azure.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:4 http://azure.archive.ubuntu.com/ubuntu noble-backports InRelease [126 kB]
+Get:5 http://azure.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:7 https://dl.google.com/linux/chrome-stable/deb stable InRelease [2548 B]
+Get:8 https://pkgs.tailscale.com/stable/ubuntu noble InRelease
+Get:9 https://packages.microsoft.com/ubuntu/24.04/prod noble/main arm64 Packages [394 kB]
+Get:10 https://packages.microsoft.com/ubuntu/24.04/prod noble/main amd64 Packages [441 kB]
+Get:11 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1260 kB]
+Get:12 http://azure.archive.ubuntu.com/ubuntu noble-updates/main Translation-en [292 kB]
+Get:13 http://azure.archive.ubuntu.com/ubuntu noble-updates/main amd64 Components [180 kB]
+Get:14 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1690 kB]
+Get:15 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe Translation-en [339 kB]
+Get:16 http://azure.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Components [388 kB]
+Get:17 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted amd64 Packages [1536 kB]
+Get:18 http://azure.archive.ubuntu.com/ubuntu noble-updates/restricted Translation-en [352 kB]
+Get:19 http://azure.archive.ubuntu.com/ubuntu noble-updates/multiverse amd64 Components [940 B]
+Get:20 http://azure.archive.ubuntu.com/ubuntu noble-backports/main amd64 Components [5740 B]
+Get:21 http://azure.archive.ubuntu.com/ubuntu noble-backports/universe amd64 Components [12.6 kB]
+Get:22 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Packages [1002 kB]
+Get:23 http://azure.archive.ubuntu.com/ubuntu noble-security/main Translation-en [212 kB]
+Get:24 http://azure.archive.ubuntu.com/ubuntu noble-security/main amd64 Components [46.4 kB]
+Get:25 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Packages [1206 kB]
+Get:26 http://azure.archive.ubuntu.com/ubuntu noble-security/universe Translation-en [241 kB]
+Get:27 http://azure.archive.ubuntu.com/ubuntu noble-security/universe amd64 Components [76.3 kB]
+Get:28 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted amd64 Packages [1437 kB]
+Get:29 http://azure.archive.ubuntu.com/ubuntu noble-security/restricted Translation-en [334 kB]
+Get:30 https://dl.google.com/linux/chrome-stable/deb stable/main amd64 Packages [1401 B]
+Get:31 https://pkgs.tailscale.com/stable/ubuntu noble/main all Packages [351 B]
+Get:32 https://pkgs.tailscale.com/stable/ubuntu noble/main amd64 Packages [16.2 kB]
+Fetched 11.9 MB in 1s (8816 kB/s)
+Reading package lists...
++ [ -n  ]
++ sudo apt-get install -y tailscale tailscale-archive-keyring
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following NEW packages will be installed:
+  tailscale tailscale-archive-keyring
+0 upgraded, 2 newly installed, 0 to remove and 38 not upgraded.
+Need to get 38.7 MB of archives.
+After this operation, 76.0 MB of additional disk space will be used.
+Get:1 https://pkgs.tailscale.com/stable/ubuntu noble/main amd64 tailscale amd64 1.102.3 [38.7 MB]
+Get:2 https://pkgs.tailscale.com/stable/ubuntu noble/main all tailscale-archive-keyring all 1.35.181 [3082 B]
+Fetched 38.7 MB in 0s (195 MB/s)
+Selecting previously unselected package tailscale.
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 201676 files and directories currently installed.)
+Preparing to unpack .../tailscale_1.102.3_amd64.deb ...
+Unpacking tailscale (1.102.3) ...
+Selecting previously unselected package tailscale-archive-keyring.
+Preparing to unpack .../tailscale-archive-keyring_1.35.181_all.deb ...
+Unpacking tailscale-archive-keyring (1.35.181) ...
+Setting up tailscale-archive-keyring (1.35.181) ...
+Setting up tailscale (1.102.3) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/tailscaled.service → /usr/lib/systemd/system/tailscaled.service.
+Running kernel seems to be up-to-date.
+No services need to be restarted.
+No containers need to be restarted.
+No user sessions are running outdated binaries.
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
++ [ false = true ]
++ set +x
+Installation complete! Log in to start using Tailscale by running:
+sudo tailscale up
+Access denied: checkprefs access denied
+Use 'sudo tailscale up --auth-key=*** --hostname=kali-cloud'.
+To not require root, use 'sudo tailscale set --operator=$USER' once.
+Error: Process completed with exit code 1.
