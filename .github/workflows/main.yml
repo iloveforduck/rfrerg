@@ -1,0 +1,50 @@
+name: Kali Linux Cloud Shell
+
+on:
+  workflow_dispatch:
+
+jobs:
+  kali:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - name: Pull Kali Docker Image
+        run: |
+          docker pull kalilinux/kali-rolling
+          
+      - name: Start Kali Container with SSH
+        env:
+          TAILSCALE_AUTHKEY: ${{ secrets.TAILSCALE_AUTHKEY }}
+        run: |
+          # Run Kali container with SSH enabled
+          docker run -d --name kali-box \
+            -p 2222:22 \
+            --privileged \
+            kalilinux/kali-rolling \
+            /bin/bash -c "apt update && apt install -y openssh-server sudo && mkdir -p /var/run/sshd && echo 'root:Kali2026!' | chpasswd && echo 'PermitRootLogin yes' >> /etc/ssh/sshd_config && /usr/sbin/sshd -D"
+          
+          sleep 10
+          
+          # Install Tailscale on host
+          curl -fsSL https://tailscale.com/install.sh | sh
+          tailscale up --authkey="$TAILSCALE_AUTHKEY" --hostname="kali-cloud"
+          
+          TS_IP=$(tailscale ip -4)
+          
+          echo ""
+          echo "=================================================="
+          echo "  >>> KALI IS READY! <<<"
+          echo "  Tailscale IP : $TS_IP"
+          echo "  SSH Port     : 2222"
+          echo "  Username     : root"
+          echo "  Password     : Kali2026!"
+          echo "  >> Connect: ssh -p 2222 root@$TS_IP"
+          echo "=================================================="
+
+      - name: Keep Alive
+        run: |
+          for i in {1..2880}; do
+            sleep 60
+            echo "[$i/2880] Kali running..."
+          done
